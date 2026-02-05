@@ -182,8 +182,8 @@ createApp({
         teeth: '無',
         coldStatus: '無',
         opType: '',
-        opDate: '', // 新增：手術日期
-        opDateUndecided: false, // 新增：是否未定
+        opDate: '', // 新增日期欄位
+        opDateUndecided: false, // 新增是否未定
         standby: 'No',
         medType: '藥水 (糖漿)',
         certCount: 0
@@ -193,7 +193,6 @@ createApp({
       ]
     };
   },
-  // 👇 監聽器：當勾選「尚未決定」時，清空日期
   watch: {
     'form.opDateUndecided'(newVal) {
       if (newVal) {
@@ -246,11 +245,6 @@ createApp({
         alert('一歲以下請填寫出生週數與出生體重'); return;
       }
       
-      // 驗證：如果沒有勾選未定，且沒填日期 (此為選填，若您希望必填請取消註解)
-      // if (!this.form.opDateUndecided && !this.form.opDate) {
-      //   alert('請選擇預計手術日期，或勾選「尚未決定」'); return;
-      // }
-
       this.submitting = true;
 
       try {
@@ -266,7 +260,7 @@ createApp({
         fd.append('coldStatus', this.form.coldStatus || '');
         fd.append('opType', this.form.opType || '');
         
-        // 👇 新增：傳送手術日期 (如果勾選未定，則傳送空字串)
+        // 傳送手術日期 (如果勾選未定，傳送空字串)
         fd.append('opDate', this.form.opDateUndecided ? '' : (this.form.opDate || ''));
 
         fd.append('standby', this.form.standby || 'No');
@@ -283,11 +277,10 @@ createApp({
         });
 
         if (res.ok) {
-          alert('送出成功，感謝！');
-          // 👇 修改：送出成功後關閉視窗
-          if (liff.isInClient()) {
-            liff.closeWindow();
-          }
+          // 👇👇👇 成功時的動作 👇👇👇
+          alert('送出成功，感謝！'); // 視窗會在這裡暫停
+          liff.closeWindow();      // 按下「確定」後，執行關閉
+          // 👆👆👆 動作結束 👆👆👆
         } else {
           alert('送出失敗，請稍後再試');
         }
@@ -302,7 +295,7 @@ createApp({
   async mounted() {
     try {
       if (window.liff) {
-        // 請確認您的 LIFF ID
+        // LIFF ID
         await liff.init({ liffId: '2009045600-eq6cC2k6' }); 
         if (liff.isLoggedIn && liff.isLoggedIn()) {
           try {
