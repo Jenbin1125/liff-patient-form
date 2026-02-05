@@ -203,11 +203,37 @@ createApp({
     toggleStandby() {
       this.form.standby = (this.form.standby === 'Yes') ? 'No' : 'Yes';
     },
-    async submitForm() {
+async submitForm() {
       if(!this.form.name || !this.form.weight) {
         alert("請至少填寫姓名與體重喔！");
         return;
       }
+      
+      this.loading = true; // 開始轉圈圈
+      
+      try {
+        // 您的 GAS 網址
+        const scriptURL = 'https://script.google.com/macros/s/您的ID/exec'; 
+        
+        // 👇 關鍵修改：加上 mode: 'no-cors'
+        await fetch(scriptURL, {
+          method: 'POST',
+          body: JSON.stringify(this.form),
+          mode: 'no-cors',  // <--- 這一行是救星！
+          headers: { 'Content-Type': 'text/plain' }
+        });
+        
+        // 因為 no-cors 模式讀不到回傳結果，只要沒報錯我們就視為成功
+        alert("資料送出成功！");
+        this.loading = false;
+        liff.closeWindow(); // 關閉視窗
+        
+      } catch (error) {
+        // 萬一真的失敗，把轉圈圈關掉，顯示錯誤
+        this.loading = false;
+        alert("傳送失敗，請截圖給醫師：" + error);
+      }
+    }
       
       this.loading = true;
       
