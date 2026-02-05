@@ -240,7 +240,7 @@ async submitForm() {
       // 呼叫 Google Apps Script (AJAX Request)
       // 注意：這裡使用 fetch 需要處理 CORS，但因為是在 LIFF 中，建議用 POST 傳送 JSON
       try {
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbzg4FNxvxfkYXJjijE1rLkUvACw4wSMHsj5JQfYi9o2k7ohrow4_NfShBJrZIT5ELVO/exec'; // 🔴 部署後填入這裡
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzhFTJVgo7ssQoAJFnrKLQ1ylHOECeilbdxUtdL9j7ROp4Ki25Q9Bgg6-M2ugd1LEE6/exec'; // 🔴 部署後填入這裡
         
         await fetch(scriptURL, {
           method: 'POST',
