@@ -141,7 +141,7 @@
     <button @click="submitForm" class="w-full btn-primary py-3 rounded-lg text-lg font-bold shadow-md active:scale-95 transition-transform mt-6">
       確認送出資料
     </button>
-    <p class="text-xs text-center text-gray-400 mt-2">送出後將由醫師助理進行審核</p>
+    <p class="text-xs text-center text-gray-400 mt-2">送出後將由醫師進行審核</p>
 
   </div>
 </div>
@@ -169,115 +169,4 @@ createApp({
         medType: '藥水 (糖漿)',
         certCount: 0
       },
-      historyOptions: ['G6PD (蠶豆症)', '氣喘', '心臟病', '癲癇', '過敏體質']
-    }
-  },
-  computed: {
-    // 自動計算年齡 (歲)
-    age() {
-      if (!this.form.birthday) return -1;
-      const birthDate = new Date(this.form.birthday);
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      return age;
-    },
-    // 顯示用的年齡字串
-    ageDisplay() {
-      if (this.age < 0) return '';
-      return this.age + " 歲";
-    },
-    // 邏輯判斷：是否為嬰兒 (<1歲)
-    isBaby() {
-      return this.age >= 0 && this.age < 1;
-    },
-    // 邏輯判斷：是否為兒童 (>4歲，換牙期)
-    isChild() {
-      return this.age >= 4;
-    }
-  },
-  methods: {
-    toggleStandby() {
-      this.form.standby = (this.form.standby === 'Yes') ? 'No' : 'Yes';
-    },
-async submitForm() {
-      if(!this.form.name || !this.form.weight) {
-        alert("請至少填寫姓名與體重喔！");
-        return;
-      }
-      
-      this.loading = true; // 開始轉圈圈
-      
-      try {
-        // 您的 GAS 網址
-        const scriptURL = 'https://script.google.com/macros/s/您的ID/exec'; 
-        
-        // 👇 關鍵修改：加上 mode: 'no-cors'
-        await fetch(scriptURL, {
-          method: 'POST',
-          body: JSON.stringify(this.form),
-          mode: 'no-cors',  // <--- 這一行是救星！
-          headers: { 'Content-Type': 'text/plain' }
-        });
-        
-        // 因為 no-cors 模式讀不到回傳結果，只要沒報錯我們就視為成功
-        alert("資料送出成功！");
-        this.loading = false;
-        liff.closeWindow(); // 關閉視窗
-        
-      } catch (error) {
-        // 萬一真的失敗，把轉圈圈關掉，顯示錯誤
-        this.loading = false;
-        alert("傳送失敗，請截圖給醫師：" + error);
-      }
-    }
-      
-      this.loading = true;
-      
-      // 呼叫 Google Apps Script (AJAX Request)
-      // 注意：這裡使用 fetch 需要處理 CORS，但因為是在 LIFF 中，建議用 POST 傳送 JSON
-      try {
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbzhFTJVgo7ssQoAJFnrKLQ1ylHOECeilbdxUtdL9j7ROp4Ki25Q9Bgg6-M2ugd1LEE6/exec'; // 🔴 部署後填入這裡
-        
-        await fetch(scriptURL, {
-          method: 'POST',
-          body: JSON.stringify(this.form),
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' } // 避開 CORS 預檢
-        });
-        
-        alert("資料送出成功！");
-        liff.closeWindow(); // 關閉視窗
-        
-      } catch (error) {
-        alert("傳送失敗：" + error);
-        this.loading = false;
-      }
-    }
-  },
-  async mounted() {
-    // 初始化 LIFF
-    const LIFF_ID = '2009045600-eq6cC2k6'; // 🔴 請填入您的 LIFF ID
-    
-    try {
-      await liff.init({ liffId: LIFF_ID });
-      if (liff.isLoggedIn()) {
-        const profile = await liff.getProfile();
-        this.form.userId = profile.userId;
-        // 這裡可以做「讀取舊資料」的邏輯 (進階)
-      } else {
-        liff.login();
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      this.loading = false;
-    }
-  }
-}).mount('#app');
-</script>
-
-</body>
-</html>
+      historyOptions: ['G6PD (蠶豆症)', '
