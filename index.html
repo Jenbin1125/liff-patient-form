@@ -12,6 +12,7 @@
     .btn-primary { background-color: #4F46E5; color: white; }
     .btn-standby-on { background-color: #F59E0B; color: white; border: 2px solid #F59E0B; } /* 亮橘色代表願意 */
     .btn-standby-off { background-color: #fff; color: #9CA3AF; border: 2px solid #E5E7EB; }
+    .btn-disabled { opacity: 0.6; pointer-events: none; }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -49,7 +50,7 @@
 
         <div>
           <label class="block text-sm font-medium text-gray-700">目前體重 (kg)</label>
-          <input v-model="form.weight" type="number" step="0.1" class="w-full border p-2 rounded" placeholder="例如: 15.5">
+          <input v-model.number="form.weight" type="number" step="0.1" class="w-full border p-2 rounded" placeholder="例如: 15.5">
         </div>
       </div>
     </section>
@@ -63,7 +64,7 @@
         </div>
         <div>
           <label class="text-xs">出生體重 (g)</label>
-          <input v-model="form.birthWeight" type="number" class="w-full border p-1 rounded" placeholder="例如: 3200">
+          <input v-model.number="form.birthWeight" type="number" class="w-full border p-1 rounded" placeholder="例如: 3200">
         </div>
       </div>
     </section>
@@ -129,17 +130,19 @@
           <option>藥粉 (磨粉)</option>
           <option>藥丸 (吞錠)</option>
         </select>
-        <p v-if="form.weight > 30 && form.medType !== '藥丸 (吞錠)'" class="text-xs text-blue-500 mt-1">💡 體重 > 30kg 建議嘗試吞藥丸，效果較穩定喔！</p>
+        <p v-if="form.weight > 30 && form.medType !== '藥丸 (吞錠)'" class="text-xs text-blue-500 mt-1">💡 體重 &gt; 30kg 建議嘗試吞藥丸，效果較穩定喔！</p>
       </div>
       
       <div>
         <label class="block text-sm font-medium text-gray-700">診斷證明書需求 (份)</label>
-        <input v-model="form.certCount" type="number" min="0" class="w-full border p-2 rounded">
+        <input v-model.number="form.certCount" type="number" min="0" class="w-full border p-2 rounded">
       </div>
     </section>
 
-    <button @click="submitForm" class="w-full btn-primary py-3 rounded-lg text-lg font-bold shadow-md active:scale-95 transition-transform mt-6">
-      確認送出資料
+    <button :class="['w-full btn-primary py-3 rounded-lg text-lg font-bold shadow-md active:scale-95 transition-transform mt-6', submitting ? 'btn-disabled' : '']"
+            :disabled="submitting"
+            @click="submitForm">
+      {{ submitting ? '送出中...' : '確認送出資料' }}
     </button>
     <p class="text-xs text-center text-gray-400 mt-2">送出後將由醫師進行審核</p>
 
@@ -147,19 +150,23 @@
 </div>
 
 <script>
+/* Google Apps Script endpoint */
+const scriptURL = 'https://script.google.com/macros/s/AKfycbzhFTJVgo7ssQoAJFnrKLQ1ylHOECeilbdxUtdL9j7ROp4Ki25Q9Bgg6-M2ugd1LEE6/exec';
+
 const { createApp } = Vue;
 
 createApp({
   data() {
     return {
       loading: true,
+      submitting: false,
       form: {
         userId: '', // 自動抓取
         name: '',
         birthday: '',
-        weight: '',
+        weight: null,
         birthWeeks: '',
-        birthWeight: '',
+        birthWeight: null,
         allergy: '無',
         history: [],
         teeth: '無',
@@ -169,4 +176,175 @@ createApp({
         medType: '藥水 (糖漿)',
         certCount: 0
       },
-      historyOptions: ['G6PD (蠶豆症)', '
+      historyOptions: [
+        'G6PD (蠶豆症)',
+        '先天性心臟病',
+        '哮喘',
+        '早產',
+        '免疫缺陷',
+        '癲癇',
+        '其他'
+      ]
+    };
+  },
+  computed: {
+    ageDisplay() {
+      if (!this.form.birthday) return '';
+      const bd = new Date(this.form.birthday);
+      if (isNaN(bd)) return '';
+      const now = new Date();
+      let years = now.getFullYear() - bd.getFullYear();
+      let months = now.getMonth() - bd.getMonth();
+      let days = now.getDate() - bd.getDate();
+      if (days < 0) {
+        months -= 1;
+      }
+      if (months < 0) {
+        years -= 1;
+        months += 12;
+      }
+      if (years < 1) {
+        const totalMonths = (now.getFullYear() - bd.getFullYear()) * 12 + (now.getMonth() - bd.getMonth());
+        return totalMonths + ' 個月';
+      }
+      return years + ' 歲' + (months > 0 ? (' ' + months + ' 個月') : '');
+    },
+    isBaby() {
+      if (!this.form.birthday) return false;
+      const bd = new Date(this.form.birthday);
+      const now = new Date();
+      const diffMs = now - bd;
+      const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30.4375);
+      return diffMonths < 12;
+    },
+    isChild() {
+      if (!this.form.birthday) return false;
+      const bd = new Date(this.form.birthday);
+      const now = new Date();
+      let years = now.getFullYear() - bd.getFullYear();
+      const m = now.getMonth() - bd.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < bd.getDate())) years -= 1;
+      return years >= 1 && years < 18;
+    }
+  },
+  methods: {
+    toggleStandby() {
+      this.form.standby = this.form.standby === 'Yes' ? 'No' : 'Yes';
+    },
+    async submitForm() {
+      // 基本驗證
+      if (!this.form.name) {
+        alert('請輸入小朋友姓名');
+        return;
+      }
+      if (!this.form.opType) {
+        alert('請選擇預計術式');
+        return;
+      }
+      // 一歲以下必填出生史檢查
+      if (this.isBaby && (!this.form.birthWeeks || !this.form.birthWeight)) {
+        alert('一歲以下請填寫出生週數與出生體重');
+        return;
+      }
+
+      this.submitting = true;
+
+      try {
+        // 建立 FormData 以相容 Google Apps Script doPost 處理
+        const fd = new FormData();
+        // 附加基本欄位
+        fd.append('userId', this.form.userId || '');
+        fd.append('name', this.form.name || '');
+        fd.append('birthday', this.form.birthday || '');
+        fd.append('weight', this.form.weight != null ? String(this.form.weight) : '');
+        fd.append('birthWeeks', this.form.birthWeeks || '');
+        fd.append('birthWeight', this.form.birthWeight != null ? String(this.form.birthWeight) : '');
+        fd.append('allergy', this.form.allergy || '');
+        fd.append('teeth', this.form.teeth || '');
+        fd.append('coldStatus', this.form.coldStatus || '');
+        fd.append('opType', this.form.opType || '');
+        fd.append('standby', this.form.standby || 'No');
+        fd.append('medType', this.form.medType || '');
+        fd.append('certCount', String(this.form.certCount || 0));
+
+        // history 為陣列，逐一 append（Apps Script 可用 e.parameters['history'] 取得）
+        if (Array.isArray(this.form.history)) {
+          this.form.history.forEach(item => fd.append('history', item));
+        }
+
+        // 傳送到 Google Apps Script
+        const res = await fetch(scriptURL, {
+          method: 'POST',
+          body: fd,
+          // 不設定 CORS mode，讓 Server 端處理 CORS header；若遇到 CORS 問題可改用 mode:'no-cors'（但回應會是 opaque）
+        });
+
+        // 嘗試解析回應（有些 Apps Script 回傳文字而非 JSON）
+        let ok = res.ok;
+        let text = '';
+        try {
+          text = await res.text();
+        } catch (e) {
+          // 忽略解析錯誤
+        }
+
+        if (ok) {
+          alert('送出成功，感謝！');
+          // 你可以在此清空表單或導到感謝頁
+          // this.resetForm();
+        } else {
+          console.error('送出失敗', res, text);
+          alert('送出失敗，請稍後再試或聯絡系統管理員');
+        }
+      } catch (err) {
+        console.error('提交發生錯誤:', err);
+        alert('送出發生錯誤，請檢查網路或稍後再試');
+      } finally {
+        this.submitting = false;
+      }
+    },
+    resetForm() {
+      this.form = {
+        userId: this.form.userId || '',
+        name: '',
+        birthday: '',
+        weight: null,
+        birthWeeks: '',
+        birthWeight: null,
+        allergy: '無',
+        history: [],
+        teeth: '無',
+        coldStatus: '無',
+        opType: '',
+        standby: 'No',
+        medType: '藥水 (糖漿)',
+        certCount: 0
+      };
+    }
+  },
+  async mounted() {
+    try {
+      if (window.liff) {
+        await liff.init({ liffId: '2009045600-eq6cC2k6' });
+        if (liff.isLoggedIn && liff.isLoggedIn()) {
+          try {
+            const profile = await liff.getProfile();
+            this.form.userId = profile.userId || '';
+          } catch (err) {
+            console.warn('無法取得 LIFF profile:', err);
+          }
+        } else {
+          // liff.login();
+        }
+      }
+    } catch (err) {
+      console.warn('LIFF init failed or not used:', err);
+    } finally {
+      this.loading = false;
+    }
+  }
+}).mount('#app');
+</script>
+
+</body>
+</html>
