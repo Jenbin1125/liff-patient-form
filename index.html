@@ -256,66 +256,44 @@ createApp({
       this.submitting = true;
 
       try {
-        const fd = new FormData();
-        fd.append('userId', this.form.userId || '');
-        fd.append('name', this.form.name || '');
-        fd.append('birthday', this.form.birthday || '');
-        fd.append('weight', this.form.weight != null ? String(this.form.weight) : '');
-        fd.append('birthWeeks', this.form.birthWeeks || '');
-        fd.append('birthWeight', this.form.birthWeight != null ? String(this.form.birthWeight) : '');
-        fd.append('allergy', this.form.allergy || '');
-        fd.append('teeth', this.form.teeth || '');
-        fd.append('coldStatus', this.form.coldStatus || '');
-        fd.append('opType', this.form.opType || '');
-        
-        // 傳送手術日期 (如果勾選未定，傳送空字串)
-        fd.append('opDate', this.form.opDateUndecided ? '' : (this.form.opDate || ''));
+        // 🚨 改用 URLSearchParams，確保手機 LINE 瀏覽器絕對能正確打包資料
+        const params = new URLSearchParams();
+        params.append('userId', this.form.userId || '');
+        params.append('name', this.form.name || '');
+        params.append('birthday', this.form.birthday || '');
+        params.append('weight', this.form.weight != null ? String(this.form.weight) : '');
+        params.append('birthWeeks', this.form.birthWeeks || '');
+        params.append('birthWeight', this.form.birthWeight != null ? String(this.form.birthWeight) : '');
+        params.append('allergy', this.form.allergy || '');
+        params.append('teeth', this.form.teeth || '');
+        params.append('coldStatus', this.form.coldStatus || '');
+        params.append('opType', this.form.opType || '');
+        params.append('opDate', this.form.opDateUndecided ? '' : (this.form.opDate || ''));
+        params.append('standby', this.form.standby || 'No');
+        params.append('medType', this.form.medType || '');
+        params.append('certCount', String(this.form.certCount || 0));
 
-        fd.append('standby', this.form.standby || 'No');
-        fd.append('medType', this.form.medType || '');
-        fd.append('certCount', String(this.form.certCount || 0));
-
+        // 處理陣列格式的病史
         if (Array.isArray(this.form.history)) {
-          this.form.history.forEach(item => fd.append('history', item));
+          params.append('history', this.form.history.join(', '));
         }
 
-        // 🚨 加上 mode: 'no-cors' 破解跨網域阻擋
+        // 發送給 Google Apps Script
         await fetch(scriptURL, {
           method: 'POST',
-          body: fd,
-          mode: 'no-cors' 
+          body: params,
+          mode: 'no-cors'
         });
 
-        // 成功時的動作 (因為用了 no-cors，我們直接執行成功邏輯)
-        alert('送出成功，資料已建檔！'); 
-        liff.closeWindow();
+        // 👇 成功時的動作
+        alert('送出成功，資料已為您建檔！'); 
+        liff.closeWindow(); 
+
       } catch (err) {
-        console.error('提交發生錯誤:', err);
-        alert('送出發生錯誤，請檢查網路');
+        alert('發生錯誤: ' + err.message);
       } finally {
         this.submitting = false;
       }
-    },
-  },
-  async mounted() {
-    try {
-      if (window.liff) {
-        // LIFF ID
-        await liff.init({ liffId: '2009045600-eq6cC2k6' }); 
-        if (liff.isLoggedIn && liff.isLoggedIn()) {
-          try {
-            const profile = await liff.getProfile();
-            this.form.userId = profile.userId || '';
-          } catch (err) { }
-        }
-      }
-    } catch (err) {
-      console.warn('LIFF init failed:', err);
-    } finally {
-      this.loading = false;
-    }
-  }
-}).mount('#app');
 </script>
 
 </body>
