@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>小兒外科 初診資料表</title>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -23,7 +22,6 @@
   
   <div class="bg-gradient-to-r from-blue-600 to-blue-500 p-5 text-white text-center shadow-md rounded-b-2xl mb-4">
     <h1 class="text-2xl font-extrabold tracking-wide">初診資料表</h1>
-    <p class="text-sm opacity-90 mt-1 font-medium">👨‍⚕️ 王正斌醫師｜小兒外科</p>
   </div>
 
   <div v-if="loading" class="flex flex-col items-center justify-center mt-20">
@@ -32,7 +30,6 @@
   </div>
 
   <div v-else class="px-4 space-y-4">
-    <p class="text-xs text-gray-500 text-center mb-2">請家長協助填寫以下資訊，以加速看診流程</p>
 
     <section class="card border-t-4 border-blue-500">
       <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">📝 基本資料</h3>
@@ -108,7 +105,15 @@
         <select v-model="form.opType" class="input-field">
           <option disabled value="">請選擇手術項目...</option>
           <option>腹股溝疝氣</option>
-          <option>隱睪症</option>
+          <option>隱睪症手術</option>
+          <option>包皮手術</option>
+          <option>舌繫帶(上唇繫帶)手術</option>
+          <option>耳前瘻管</option>
+          <option>皮膚及皮下腫瘤切除</option>
+          <option>腸胃道手術</option>
+          <option>尿道下裂手術</option>
+          <option>輸尿管手術</option>
+          <option>肛門膿瘍及肛門瘻管手術</option>
           <option>其他</option>
         </select>
       </div>
