@@ -17,7 +17,9 @@
     .btn-standby-off { background-color: #F3F4F6; color: #6B7280; border: 2px solid #E5E7EB; }
   </style>
 </head>
-<body class="text-gray-800 pb-24"> <div id="app" class="max-w-md mx-auto relative">
+<body class="text-gray-800 pb-24">
+
+<div id="app" class="max-w-md mx-auto relative">
   
   <div class="bg-gradient-to-r from-blue-600 to-blue-500 p-5 text-white text-center shadow-md rounded-b-2xl mb-4">
     <h1 class="text-2xl font-extrabold tracking-wide">初診資料表</h1>
@@ -73,7 +75,6 @@
 
     <section class="card border-t-4 border-red-400">
       <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">🏥 健康風險評估</h3>
-      
       <div class="mb-5">
         <label class="label-title text-red-600">近期兩週是否有感冒？</label>
         <select v-model="form.coldStatus" class="input-field bg-red-50">
@@ -82,7 +83,6 @@
           <option value="已痊癒">👌 有，但已痊癒</option>
         </select>
       </div>
-
       <div class="mb-5">
         <label class="label-title">特殊病史 (可複選)</label>
         <div class="grid grid-cols-2 gap-2 mt-2">
@@ -92,7 +92,6 @@
           </label>
         </div>
       </div>
-
       <div v-if="isChild" class="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
         <label class="label-title text-yellow-800 mb-2">🦷 牙齒狀況 (是否有鬆動?)</label>
         <div class="flex space-x-6">
@@ -104,7 +103,6 @@
 
     <section class="card border-t-4 border-purple-500">
       <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">🗓️ 手術排程</h3>
-      
       <div class="mb-4">
         <label class="label-title">預計術式 <span class="text-red-500">*</span></label>
         <select v-model="form.opType" class="input-field">
@@ -114,7 +112,6 @@
           <option>其他</option>
         </select>
       </div>
-
       <div class="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-200">
         <label class="label-title mb-2">預計手術日期</label>
         <div class="flex items-center mb-3">
@@ -123,7 +120,6 @@
         </div>
         <input v-model="form.opDate" type="date" class="input-field disabled:opacity-50" :disabled="form.opDateUndecided">
       </div>
-
       <div class="p-4 rounded-xl cursor-pointer transition-all duration-200 text-center" :class="form.standby === 'Yes' ? 'btn-standby-on' : 'btn-standby-off'" @click="toggleStandby">
         <h4 class="font-bold text-lg">⚡ 願意候補臨時空缺嗎？</h4>
         <p class="text-xs mt-1 font-medium">{{ form.standby === 'Yes' ? '✅ 是的，若有空檔請通知我 (優先安排)' : '❌ 不用，我依原定計畫就好' }}</p>
@@ -142,9 +138,9 @@
       <div>
         <label class="label-title">診斷證明書需求 (份)</label>
         <div class="flex items-center">
-          <button @click="if(form.certCount>0) form.certCount--" class="bg-gray-200 px-4 py-2 rounded-l-lg font-bold">-</button>
-          <input v-model.number="form.certCount" type="number" min="0" class="w-full border-y border-gray-200 p-2 text-center focus:outline-none">
-          <button @click="form.certCount++" class="bg-gray-200 px-4 py-2 rounded-r-lg font-bold">+</button>
+          <button @click="decreaseCert" class="bg-gray-200 text-gray-700 px-5 py-3 rounded-l-lg font-bold hover:bg-gray-300">-</button>
+          <input v-model.number="form.certCount" type="number" min="0" class="w-full border-y border-gray-200 p-3 text-center focus:outline-none bg-white font-bold">
+          <button @click="increaseCert" class="bg-gray-200 text-gray-700 px-5 py-3 rounded-r-lg font-bold hover:bg-gray-300">+</button>
         </div>
       </div>
     </section>
@@ -162,7 +158,7 @@
 </div>
 
 <script>
-/* 🚨 唯一修改處：貼上您的最新 GAS 網址 🚨 */
+/* 🚨 唯一需要修改的地方：請把下面引號內的文字，換成您的 GAS 網址 🚨 */
 const scriptURL = 'https://script.google.com/macros/s/AKfycbyFWRii-92owh-NxfuUUzLOUqKm0k-21xE9L11y59qjJZ--QScCbmjS3jl4K_WCfFI/exec';
 
 const { createApp } = Vue;
@@ -174,7 +170,7 @@ createApp({
       submitting: false,
       form: {
         userId: '',
-        idNumber: '', // 新增身分證
+        idNumber: '', 
         name: '',
         birthday: '',
         weight: null,
@@ -196,7 +192,6 @@ createApp({
   },
   watch: {
     'form.opDateUndecided'(newVal) { if (newVal) this.form.opDate = ''; },
-    // 自動將身分證轉大寫
     'form.idNumber'(newVal) { this.form.idNumber = newVal.toUpperCase(); }
   },
   computed: {
@@ -231,14 +226,16 @@ createApp({
   methods: {
     toggleStandby() { this.form.standby = this.form.standby === 'Yes' ? 'No' : 'Yes'; },
     
-    // 驗證身分證格式
+    // 安全的診斷書按鈕加減邏輯
+    decreaseCert() { if (this.form.certCount > 0) this.form.certCount--; },
+    increaseCert() { this.form.certCount++; },
+    
     isValidTaiwanID(id) {
       const regex = /^[A-Z][1289]\d{8}$/;
       return regex.test(id);
     },
 
     async submitForm() {
-      // 嚴格表單防呆驗證
       if (!this.form.idNumber) { alert('請填寫小朋友的身分證字號喔！'); return; }
       if (!this.isValidTaiwanID(this.form.idNumber)) { alert('身分證字號格式似乎不正確，請再檢查一次！'); return; }
       if (!this.form.name) { alert('請輸入小朋友姓名！'); return; }
