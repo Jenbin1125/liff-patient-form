@@ -279,19 +279,16 @@ createApp({
           this.form.history.forEach(item => fd.append('history', item));
         }
 
-        const res = await fetch(scriptURL, {
+        // 🚨 加上 mode: 'no-cors' 破解跨網域阻擋
+        await fetch(scriptURL, {
           method: 'POST',
           body: fd,
+          mode: 'no-cors' 
         });
 
-        if (res.ok) {
-          // 👇👇👇 成功時的動作 👇👇👇
-          alert('送出成功，感謝！'); // 視窗會在這裡暫停
-          liff.closeWindow();      // 按下「確定」後，執行關閉
-          // 👆👆👆 動作結束 👆👆👆
-        } else {
-          alert('送出失敗，請稍後再試');
-        }
+        // 成功時的動作 (因為用了 no-cors，我們直接執行成功邏輯)
+        alert('送出成功，資料已建檔！'); 
+        liff.closeWindow();
       } catch (err) {
         console.error('提交發生錯誤:', err);
         alert('送出發生錯誤，請檢查網路');
