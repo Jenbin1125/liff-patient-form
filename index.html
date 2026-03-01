@@ -168,8 +168,8 @@
 </div>
 
 <script>
-/* 您的 GAS 網址 */
-const scriptURL = 'https://script.google.com/macros/library/d/1qYDKw4R2TiHPuMD58PeMNA4F-xsFSu_nHFMH4SHFZ3CZaP2ipQ4sOSYd/3';
+/* 🚨 請把下面引號內的網址，換成您「最新部署的 GAS 網址」 */
+const scriptURL = '請貼上您最新的GAS網址';
 
 const { createApp } = Vue;
 
@@ -190,8 +190,8 @@ createApp({
         teeth: '無',
         coldStatus: '無',
         opType: '',
-        opDate: '', // 新增日期欄位
-        opDateUndecided: false, // 新增是否未定
+        opDate: '',
+        opDateUndecided: false,
         standby: 'No',
         medType: '藥水 (糖漿)',
         certCount: 0
@@ -256,7 +256,7 @@ createApp({
       this.submitting = true;
 
       try {
-        // 🚨 改用 URLSearchParams，確保手機 LINE 瀏覽器絕對能正確打包資料
+        // 使用 URLSearchParams 確保手機端 100% 相容
         const params = new URLSearchParams();
         params.append('userId', this.form.userId || '');
         params.append('name', this.form.name || '');
@@ -273,20 +273,17 @@ createApp({
         params.append('medType', this.form.medType || '');
         params.append('certCount', String(this.form.certCount || 0));
 
-        // 處理陣列格式的病史
         if (Array.isArray(this.form.history)) {
           params.append('history', this.form.history.join(', '));
         }
 
-        // 發送給 Google Apps Script
         await fetch(scriptURL, {
           method: 'POST',
           body: params,
           mode: 'no-cors'
         });
 
-        // 👇 成功時的動作
-        alert('送出成功，資料已為您建檔！'); 
+        alert('送出成功，資料已建檔！'); 
         liff.closeWindow(); 
 
       } catch (err) {
@@ -294,6 +291,26 @@ createApp({
       } finally {
         this.submitting = false;
       }
+    },
+  },
+  async mounted() {
+    try {
+      if (window.liff) {
+        await liff.init({ liffId: '2009045600-eq6cC2k6' }); 
+        if (liff.isLoggedIn && liff.isLoggedIn()) {
+          try {
+            const profile = await liff.getProfile();
+            this.form.userId = profile.userId || '';
+          } catch (err) { console.warn(err); }
+        }
+      }
+    } catch (err) {
+      console.warn('LIFF init failed:', err);
+    } finally {
+      this.loading = false;
+    }
+  }
+}).mount('#app');
 </script>
 
 </body>
